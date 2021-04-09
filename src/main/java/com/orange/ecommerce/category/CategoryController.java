@@ -1,5 +1,6 @@
 package com.orange.ecommerce.category;
 
+import com.orange.ecommerce.config.security.role.AllowAdmin;
 import io.swagger.annotations.Api;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +24,7 @@ public class CategoryController {
         this.categoryRepository = categoryRepository;
     }
 
+    @AllowAdmin
     @PostMapping
     public ResponseEntity create(@RequestBody @Valid CategoryForm form) {
         Category category = categoryRepository.save(form.toModel());

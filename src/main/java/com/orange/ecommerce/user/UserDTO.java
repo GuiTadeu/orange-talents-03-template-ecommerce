@@ -1,17 +1,17 @@
-package com.orange.ecommerce.customer;
+package com.orange.ecommerce.user;
 
 import java.time.LocalDate;
 
-public class CustomerDTO {
+public class UserDTO {
 
     private Long id;
     private String email;
     private LocalDate createdAt;
 
-    public CustomerDTO(Customer customer) {
-        this.id = customer.getId();
-        this.email = customer.getEmail();
-        this.createdAt = customer.getCreatedAt();
+    public UserDTO(User user) {
+        this.id = user.getId();
+        this.email = user.getEmail();
+        this.createdAt = user.getCreatedAt();
     }
 
     public Long getId() {

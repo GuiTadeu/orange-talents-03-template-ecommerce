@@ -1,4 +1,4 @@
-package com.orange.ecommerce.customer;
+package com.orange.ecommerce.user;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,14 +13,14 @@ import java.net.URI;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class CustomerControllerTest {
+public class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Test
-    public void create__should_save_new_customer_and_return_status_200() throws Exception {
-        URI uri = new URI("/customers");
+    public void create__should_save_new_user_and_return_status_201_created() throws Exception {
+        URI uri = new URI("/users");
         String json = "{\"email\": \"nespresso@gmail.com\", \"plainPassword\":\"123456789\"}";
 
         mockMvc
@@ -30,12 +30,12 @@ public class CustomerControllerTest {
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(MockMvcResultMatchers
                 .status()
-                .is(200));
+                .is(201));
     }
 
     @Test
-    public void create__should_not_save_new_customer_and_return_status_400() throws Exception {
-        URI uri = new URI("/customers");
+    public void create__should_not_save_new_user_and_return_status_400_badRequest() throws Exception {
+        URI uri = new URI("/users");
         String json = "{}";
 
         mockMvc

@@ -1,10 +1,10 @@
-package com.orange.ecommerce.config;
+package com.orange.ecommerce.config.security;
 
 public class OpenURLS {
 
     public static final String[] VALUES = {
+            "/auth",
             "/h2-console/**",
-            "/customers/**",
-            "/categories/**"
+            "/users/**"
     };
 }
