@@ -147,6 +147,45 @@ public class ProductControllerTest {
                 .is(400));
     }
 
+    @Test
+    @Transactional
+    public void productQuestion_should_create_user_question_and_return_status_201_created() throws Exception {
+        Product product = saveProductWithOwnerLogin("Hitman", "kratos@gmail.com", "kratos123");
+        String userQuestion = "{\"title\": \"Como baixo tinta pra minha impressora?\"}";
+
+        URI uri = new URI("/products/" + product.getId() + "/question");
+        login("atreus@gmail.com", "atreus123", "ROLE_CUSTOMER");
+
+        mockMvc
+            .perform(MockMvcRequestBuilders
+                .post(uri)
+                .content(userQuestion)
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers
+                .status()
+                .is(201));
+    }
+
+    @Test
+    @Transactional
+    public void productQuestion_should_not_create_user_question_and_return_status_400_badRequest() throws Exception {
+        Product product = saveProductWithOwnerLogin("Hitman", "kratos@gmail.com", "kratos123");
+
+        String userQuestion = "{\"title\":\"\"}";
+
+        URI uri = new URI("/products/" + product.getId() + "/question");
+        login("atreus@gmail.com", "atreus123", "ROLE_CUSTOMER");
+
+        mockMvc
+            .perform(MockMvcRequestBuilders
+                .post(uri)
+                .content(userQuestion)
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers
+                .status()
+                .is(400));
+    }
+
     private void uploadImageWithExpectedStatus(Product product, Integer expectedStatus) throws Exception {
         var uploadImageProductUri = new URI(String.format("/products/%s/upload", product.getId()));
 

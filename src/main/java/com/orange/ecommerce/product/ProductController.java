@@ -2,6 +2,7 @@ package com.orange.ecommerce.product;
 
 import com.orange.ecommerce.category.Category;
 import com.orange.ecommerce.category.CategoryRepository;
+import com.orange.ecommerce.share.MailSender;
 import com.orange.ecommerce.share.ValidationErrorsDTO;
 import com.orange.ecommerce.user.User;
 import com.orange.ecommerce.user.UserRepository;
@@ -27,12 +28,16 @@ public class ProductController {
 
     private final ProductRepository productRepository;
     private final ProductOpinionRepository productOpinionRepository;
+    private final ProductQuestionRepository productQuestionRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
 
-    public ProductController(ProductRepository productRepository, ProductOpinionRepository productOpinionRepository, CategoryRepository categoryRepository, UserRepository userRepository) {
+    public ProductController(ProductRepository productRepository, ProductOpinionRepository productOpinionRepository,
+                             ProductQuestionRepository productQuestionRepository, CategoryRepository categoryRepository,
+                             UserRepository userRepository) {
         this.productRepository = productRepository;
         this.productOpinionRepository = productOpinionRepository;
+        this.productQuestionRepository = productQuestionRepository;
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
     }
@@ -95,5 +100,28 @@ public class ProductController {
                 .buildAndExpand(productOpinionDTO.getId()).toUri();
 
         return ResponseEntity.created(uri).body(productOpinionDTO);
+    }
+
+    @PostMapping("/{productId}/question")
+    public ResponseEntity<?> productQuestion(@RequestBody @Valid ProductQuestionForm form, @PathVariable Long productId, Principal principal) throws Exception {
+
+        User loggedUser = userRepository.findByEmail(principal.getName()).orElseThrow(BadHttpRequest::new);
+        Product product = productRepository.findById(productId).orElseThrow(BindException::new);
+
+        ProductQuestion question = form.toModel(loggedUser, product);
+        ProductQuestion savedProductQuestion = productQuestionRepository.save(question);
+
+        MailSender sender = new MailSender()
+            .setFrom(loggedUser.getEmail())
+            .setTo(product.getOwnerEmail())
+            .setSubject("Nova pergunta - " + product.getName())
+            .setText(form.getTitle())
+            .send();
+
+        var productQuestionDTO = new ProductQuestionDTO(savedProductQuestion);
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/question/{id}")
+                .buildAndExpand(productQuestionDTO.getId()).toUri();
+
+        return ResponseEntity.created(uri).body(productQuestionDTO);
     }
 }
