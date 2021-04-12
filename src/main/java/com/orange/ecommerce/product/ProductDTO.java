@@ -14,6 +14,7 @@ public class ProductDTO {
     private String description;
     private String categoryName;
     private LocalDate createdAt;
+    private String ownerEmail;
 
     public ProductDTO(Product product) {
         this.id = product.getId();
@@ -24,6 +25,7 @@ public class ProductDTO {
         this.description = product.getDescription();
         this.categoryName = product.getCategoryName();
         this.createdAt = product.getCreatedAt();
+        this.ownerEmail = product.getOwnerEmail();
     }
 
     public Long getId() {
@@ -56,5 +58,9 @@ public class ProductDTO {
 
     public LocalDate getCreatedAt() {
         return createdAt;
+    }
+
+    public String getOwnerEmail() {
+        return ownerEmail;
     }
 }

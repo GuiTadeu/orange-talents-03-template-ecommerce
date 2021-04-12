@@ -2,6 +2,8 @@ package com.orange.ecommerce.product;
 
 import com.orange.ecommerce.category.Category;
 import com.orange.ecommerce.share.MustExistsOnDatabase;
+import com.orange.ecommerce.share.UniqueValue;
+import com.orange.ecommerce.user.User;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
@@ -13,6 +15,7 @@ import java.util.HashMap;
 public class ProductForm {
 
     @NotBlank
+    @UniqueValue(fieldName = "name", domainClass = Product.class)
     private String name;
 
     @Min(1)
@@ -46,8 +49,8 @@ public class ProductForm {
         this.categoryId = categoryId;
     }
 
-    public Product toModel(Category category) {
-        return new Product(name, price, quantity, specifications, description, category);
+    public Product toModel(Category category, User user) {
+        return new Product(name, price, quantity, specifications, description, category, user);
     }
 
     public String getName() {
