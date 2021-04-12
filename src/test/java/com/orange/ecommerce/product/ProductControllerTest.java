@@ -71,6 +71,82 @@ public class ProductControllerTest {
         uploadImageWithExpectedStatus(product, 403);
     }
 
+    @Test
+    @Transactional
+    public void productOpinion__should_create_an_opinion_to_product_with_user_and_return_status_201_created() throws Exception {
+        Product product = saveProductWithOwnerLogin("Hitman", "kratos@gmail.com", "kratos123");
+        String json = "{\"title\":\"Muito bom!\","
+                      + "\"description\":\"Chegou antes do prazo\","
+                      + "\"rating\":5,"
+                      + "\"productId\":" + product.getId() + "}";
+
+        URI uri = new URI("/products/" + product.getId() + "/opinion");
+        login("kratos@gmail.com", "kratos123", "ROLE_CUSTOMER");
+
+        mockMvc
+            .perform(MockMvcRequestBuilders
+                .post(uri)
+                .content(json)
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers
+                .status()
+                .is(201));
+    }
+
+    @Test
+    @Transactional
+    public void productOpinion__should_not_create_an_opinion_and_return_status_400_badRequest() throws Exception {
+        Product product = saveProductWithOwnerLogin("Hitman", "kratos@gmail.com", "kratos123");
+
+        URI uri = new URI("/products/" + product.getId() + "/opinion");
+        String json = "{}";
+
+        mockMvc
+            .perform(MockMvcRequestBuilders
+                .post(uri)
+                .content(json)
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers
+                .status()
+                .is(400));
+    }
+
+    @Test
+    @Transactional
+    public void productOpinion__should_not_create_an_opinion_if_user_already_has_commented_and_return_status_400_badRequest() throws Exception {
+        Product product = saveProductWithOwnerLogin("Hitman", "kratos@gmail.com", "kratos123");
+        String firstOpinion = "{\"title\":\"Muito bom!\","
+                + "\"description\":\"Chegou antes do prazo\","
+                + "\"rating\":5,"
+                + "\"productId\":" + product.getId() + "}";
+
+        URI uri = new URI("/products/" + product.getId() + "/opinion");
+        login("kratos@gmail.com", "kratos123", "ROLE_CUSTOMER");
+
+        mockMvc
+            .perform(MockMvcRequestBuilders
+                .post(uri)
+                .content(firstOpinion)
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers
+                .status()
+                .is(201));
+
+        String secondOpinion = "{\"title\":\"Odiei!\","
+                + "\"description\":\"Só não dou 0 pq não posso\","
+                + "\"rating\":1,"
+                + "\"productId\":" + product.getId() + "}";
+
+        mockMvc
+            .perform(MockMvcRequestBuilders
+                .post(uri)
+                .content(firstOpinion)
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers
+                .status()
+                .is(400));
+    }
+
     private void uploadImageWithExpectedStatus(Product product, Integer expectedStatus) throws Exception {
         var uploadImageProductUri = new URI(String.format("/products/%s/upload", product.getId()));
 
