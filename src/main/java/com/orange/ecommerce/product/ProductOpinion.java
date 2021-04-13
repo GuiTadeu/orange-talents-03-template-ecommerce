@@ -6,6 +6,7 @@ import org.hibernate.validator.constraints.Range;
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 
 @Entity
 public class ProductOpinion {
@@ -31,6 +32,8 @@ public class ProductOpinion {
     @NotNull
     @ManyToOne
     private Product product;
+
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     public ProductOpinion() {
 
@@ -68,5 +71,9 @@ public class ProductOpinion {
 
     public Product getProduct() {
         return product;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 }

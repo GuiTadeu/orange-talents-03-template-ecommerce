@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
+import java.math.BigDecimal;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Optional;
@@ -184,6 +185,44 @@ public class ProductControllerTest {
             .andExpect(MockMvcResultMatchers
                 .status()
                 .is(400));
+    }
+
+    @Test
+    @Transactional
+    public void info__should_return_productInfo_and_status_200_ok_with_body() throws Exception {
+        Product product = saveProductWithOwnerLogin("Hitman", "kratos@gmail.com", "kratos123");
+
+        product.addImage("/image-1234.png");
+
+        var question = new ProductQuestion("Como chegar na montanha?", atreus, product);
+        var opinion = new ProductOpinion("Achei bom", "Jogo da hora, jogo bem feito", 5, atreus, product);
+
+        manager.persist(question);
+        manager.persist(opinion);
+
+        URI uri = new URI("/products/" + product.getId() + "/info");
+
+        mockMvc
+            .perform(MockMvcRequestBuilders
+                .get(uri)
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers
+                .status()
+                .is(200))
+            .andExpect(jsonPath("$.name").value("Hitman"))
+            .andExpect(jsonPath("$.description").value("TXT"))
+            .andExpect(jsonPath("$.price").value(new BigDecimal(350)))
+            .andExpect(jsonPath("$.quantity").value(20))
+            .andExpect(jsonPath("$.categoryName").value("Jogos"))
+            .andExpect(jsonPath("$.specifications.X").value("A"))
+            .andExpect(jsonPath("$.specifications.Y").value("B"))
+            .andExpect(jsonPath("$.specifications.Z").value("C"))
+            .andExpect(jsonPath("$.images[0]").value("/image-1234.png"))
+            .andExpect(jsonPath("$.averageRatings").value(5))
+            .andExpect(jsonPath("$.totalRatings").value(1))
+            .andExpect(jsonPath("$.lastQuestions[0].title").value("Como chegar na montanha?"))
+            .andExpect(jsonPath("$.lastOpinions[0].title").value("Achei bom"));
+
     }
 
     private void uploadImageWithExpectedStatus(Product product, Integer expectedStatus) throws Exception {

@@ -8,6 +8,7 @@ import com.orange.ecommerce.user.User;
 import com.orange.ecommerce.user.UserRepository;
 import io.swagger.annotations.Api;
 import javassist.tools.web.BadHttpRequest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,7 @@ import javax.validation.Valid;
 import java.net.BindException;
 import java.net.URI;
 import java.security.Principal;
+import java.util.List;
 import java.util.Optional;
 
 @Api
@@ -123,5 +125,15 @@ public class ProductController {
                 .buildAndExpand(productQuestionDTO.getId()).toUri();
 
         return ResponseEntity.created(uri).body(productQuestionDTO);
+    }
+
+    @GetMapping("/{productId}/info")
+    public ResponseEntity<?> info(@PathVariable Long productId) {
+
+        List<LastQuestionsProjection> lastQuestions = productQuestionRepository.findByProduct_IdOrderByCreatedAtDesc(productId, PageRequest.of(0, 10));
+        List<LastOpinionsProjection> lastOpinions = productOpinionRepository.findByProduct_IdOrderByCreatedAtDesc(productId, PageRequest.of(0, 10));
+
+        ProductInfoDTO info = productRepository.getProductInfo(productId, lastQuestions, lastOpinions);
+        return ResponseEntity.ok().body(info);
     }
 }
