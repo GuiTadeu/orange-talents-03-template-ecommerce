@@ -1,7 +1,6 @@
 package com.orange.ecommerce.product;
 
 import com.orange.ecommerce.category.Category;
-import com.orange.ecommerce.share.UniqueValue;
 import com.orange.ecommerce.user.User;
 
 import javax.persistence.*;
@@ -28,7 +27,7 @@ public class Product {
 
     @Min(0)
     @NotNull
-    private Integer quantity;
+    private Integer stock;
 
     @NotNull
     @Size(min = 3)
@@ -61,12 +60,12 @@ public class Product {
 
     }
 
-    public Product(@NotBlank String name, @Min(1) @NotNull BigDecimal price, @Min(0) @NotNull Integer quantity,
+    public Product(@NotBlank String name, @Min(1) @NotNull BigDecimal price, @Min(0) @NotNull Integer stock,
                    @NotNull @Size(min = 3) Map<String, String> specifications,
                    @NotBlank @Size(max = 100) String description, @NotNull Category category, @NotNull User owner) {
         this.name = name;
         this.price = price;
-        this.quantity = quantity;
+        this.stock = stock;
         this.specifications = specifications;
         this.description = description;
         this.category = category;
@@ -85,8 +84,8 @@ public class Product {
         return price;
     }
 
-    public Integer getQuantity() {
-        return quantity;
+    public Integer getStock() {
+        return stock;
     }
 
     public Map<String, String> getSpecifications() {
@@ -127,5 +126,15 @@ public class Product {
 
     public String getOwnerEmail() {
         return owner.getEmail();
+    }
+
+    public boolean hasStock(Integer quantityPurchased) {
+        return this.stock >= quantityPurchased;
+    }
+
+    public void decrementStock(Integer quantityPurchased) {
+        if(hasStock(quantityPurchased)) {
+            this.stock = this.stock - quantityPurchased;
+        }
     }
 }

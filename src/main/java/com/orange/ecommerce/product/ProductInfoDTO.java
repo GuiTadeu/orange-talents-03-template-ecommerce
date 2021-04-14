@@ -23,7 +23,7 @@ public class ProductInfoDTO {
         this.name = product.getName();
         this.description = product.getDescription();
         this.price = product.getPrice();
-        this.quantity = product.getQuantity();
+        this.quantity = product.getStock();
         this.categoryName = product.getCategoryName();
         this.specifications = product.getSpecifications();
         this.images = product.getImagesUrl();

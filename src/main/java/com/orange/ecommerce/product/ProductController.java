@@ -9,6 +9,7 @@ import com.orange.ecommerce.user.UserRepository;
 import io.swagger.annotations.Api;
 import javassist.tools.web.BadHttpRequest;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,15 +32,17 @@ public class ProductController {
     private final ProductRepository productRepository;
     private final ProductOpinionRepository productOpinionRepository;
     private final ProductQuestionRepository productQuestionRepository;
+    private final ProductBuyRepository productBuyRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
 
     public ProductController(ProductRepository productRepository, ProductOpinionRepository productOpinionRepository,
-                             ProductQuestionRepository productQuestionRepository, CategoryRepository categoryRepository,
-                             UserRepository userRepository) {
+                             ProductQuestionRepository productQuestionRepository, ProductBuyRepository productBuyRepository,
+                             CategoryRepository categoryRepository, UserRepository userRepository) {
         this.productRepository = productRepository;
         this.productOpinionRepository = productOpinionRepository;
         this.productQuestionRepository = productQuestionRepository;
+        this.productBuyRepository = productBuyRepository;
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
     }
@@ -114,7 +117,7 @@ public class ProductController {
         ProductQuestion savedProductQuestion = productQuestionRepository.save(question);
 
         MailSender sender = new MailSender()
-            .setFrom(loggedUser.getEmail())
+            .setFrom("orange@gmail.com")
             .setTo(product.getOwnerEmail())
             .setSubject("Nova pergunta - " + product.getName())
             .setText(form.getTitle())
@@ -135,5 +138,47 @@ public class ProductController {
 
         ProductInfoDTO info = productRepository.getProductInfo(productId, lastQuestions, lastOpinions);
         return ResponseEntity.ok().body(info);
+    }
+
+    @PostMapping("/{productId}/buy")
+    public ResponseEntity<?> productBuy(@PathVariable Long productId, @Valid @RequestBody ProductBuyForm form, Principal principal) throws Exception {
+
+        Product product = productRepository.findById(productId).orElseThrow(BindException::new);
+        User loggedUser = userRepository.findByEmail(principal.getName()).orElseThrow(BadHttpRequest::new);
+
+        if(!product.hasStock(form.getQuantity())) {
+            var validationDTO = new ValidationErrorsDTO();
+            validationDTO.addError("The quantity is greater than stock");
+            return ResponseEntity.badRequest().body(validationDTO);
+        }
+
+        ProductBuy buy = form.toModel(product, loggedUser, product.getOwner());
+        product.decrementStock(buy.getQuantity());
+
+        productBuyRepository.save(buy);
+        productRepository.save(product);
+
+        var sender = new MailSender()
+                .setFrom(loggedUser.getEmail())
+                .setTo("orange@gmail.com")
+                .setSubject("[STARTED] Nova compra - " + product.getName())
+                .setText(String.format("Foi iniciada uma compra do produto %s - QTDE. %s - pelo usuário %s",
+                        product.getName(), buy.getQuantity(), loggedUser.getEmail()))
+                .send();
+
+        var successUrl = new URI(String.format("/buy/%s/success", buy.getId()));
+        var redirectToGatewayUrl = new URI(String.format(
+                "%s?buyId=%s&redirectUrl=%s",
+                buy.getPaymentMethodUrl(),
+                buy.getId(),
+                successUrl));
+
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.setLocation(redirectToGatewayUrl);
+
+        return ResponseEntity
+                .status(HttpStatus.TEMPORARY_REDIRECT)
+                .headers(responseHeaders)
+                .body(redirectToGatewayUrl);
     }
 }

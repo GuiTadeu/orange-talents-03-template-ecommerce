@@ -25,8 +25,9 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.ResultMatcher.matchAll;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -222,7 +223,93 @@ public class ProductControllerTest {
             .andExpect(jsonPath("$.totalRatings").value(1))
             .andExpect(jsonPath("$.lastQuestions[0].title").value("Como chegar na montanha?"))
             .andExpect(jsonPath("$.lastOpinions[0].title").value("Achei bom"));
+    }
 
+    @Test
+    @Transactional
+    public void productBuy_should_not_create_buy_and_return_status_400_badRequest() throws Exception {
+        Product product = saveProductWithOwnerLogin("Hitman", "kratos@gmail.com", "kratos123");
+
+        String productBuyForm = "{}";
+
+        URI uri = new URI("/products/" + product.getId() + "/buy");
+        login("atreus@gmail.com", "atreus123", "ROLE_CUSTOMER");
+
+        mockMvc
+            .perform(MockMvcRequestBuilders
+                .post(uri)
+                .content(productBuyForm)
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers
+                .status()
+                .is(400));
+    }
+
+    @Test
+    @Transactional
+    public void productBuy_should_create_buy_and_redirect_url_with_status_307_temporary_redirect() throws Exception {
+        Product product = saveProductWithOwnerLogin("Hitman", "kratos@gmail.com", "kratos123");
+
+        String productBuyForm = "{\"quantity\": 4, \"paymentMethod\":\"PAYPAL\"}";
+
+        URI uri = new URI("/products/" + product.getId() + "/buy");
+        login("atreus@gmail.com", "atreus123", "ROLE_CUSTOMER");
+
+        mockMvc
+            .perform(MockMvcRequestBuilders
+                .post(uri)
+                .content(productBuyForm)
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers
+                .status()
+                .is(307))
+            .andExpect(redirectedUrlPattern("https://paypal.com?buyId={[0-9]+}&redirectUrl=/buy/{[0-9]+}/success"));
+    }
+
+    @Test
+    @Transactional
+    public void productBuy_should_not_create_buy_if_request_quantity_is_more_than_stock_and_return_status_400_badRequest() throws Exception {
+        Product product = saveProductWithOwnerLogin("Hitman", "kratos@gmail.com", "kratos123");
+
+        String productBuyForm = "{\"quantity\": 412395, \"paymentMethod\":\"PAYPAL\"}";
+
+        URI uri = new URI("/products/" + product.getId() + "/buy");
+        login("atreus@gmail.com", "atreus123", "ROLE_CUSTOMER");
+
+        mockMvc
+            .perform(MockMvcRequestBuilders
+                .post(uri)
+                .content(productBuyForm)
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers
+                .status()
+                .is(400))
+            .andExpect(jsonPath("$.globalErrorMessages[0]").value("The quantity is greater than stock"));
+    }
+
+    @Test
+    @Transactional
+    public void productBuy_should_decrement_stock_if_success() throws Exception {
+        Product product = saveProductWithOwnerLogin("Hitman", "kratos@gmail.com", "kratos123");
+
+        assertEquals(20, product.getStock());
+
+        String productBuyForm = "{\"quantity\": 10, \"paymentMethod\":\"PAYPAL\"}";
+
+        URI uri = new URI("/products/" + product.getId() + "/buy");
+        login("atreus@gmail.com", "atreus123", "ROLE_CUSTOMER");
+
+        mockMvc
+            .perform(MockMvcRequestBuilders
+                .post(uri)
+                .content(productBuyForm)
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers
+                .status()
+                .is(307))
+            .andExpect(redirectedUrlPattern("https://paypal.com?buyId={[0-9]+}&redirectUrl=/buy/{[0-9]+}/success"));
+
+        assertEquals(10, product.getStock());
     }
 
     private void uploadImageWithExpectedStatus(Product product, Integer expectedStatus) throws Exception {
