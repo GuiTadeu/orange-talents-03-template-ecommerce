@@ -6,6 +6,8 @@ public class OpenURLS {
             "/auth",
             "/h2-console/**",
             "/users/**",
-            "/products/*/info"
+            "/products/*/info",
+            "/gateway/pagseguro/productBuy/*/return",
+            "/gateway/paypal/productBuy/*/return"
     };
 }

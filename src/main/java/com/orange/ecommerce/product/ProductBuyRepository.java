@@ -1,6 +1,6 @@
 package com.orange.ecommerce.product;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ProductBuyRepository extends CrudRepository<ProductBuy, Long> {
+public interface ProductBuyRepository extends JpaRepository<ProductBuy, Long> {
 }

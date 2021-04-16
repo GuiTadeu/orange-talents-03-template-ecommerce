@@ -1,4 +1,4 @@
-package com.orange.ecommerce.product;
+package com.orange.ecommerce.payment;
 
 public enum PaymentStatus {
 

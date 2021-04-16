@@ -1,5 +1,7 @@
 package com.orange.ecommerce.product;
 
+import com.orange.ecommerce.payment.PaymentMethod;
+import com.orange.ecommerce.payment.PaymentStatus;
 import com.orange.ecommerce.user.User;
 
 import javax.validation.constraints.NotNull;
@@ -13,6 +15,11 @@ public class ProductBuyForm {
 
     @NotNull
     private PaymentMethod paymentMethod;
+
+    public ProductBuyForm(@NotNull @Positive Integer quantity, @NotNull PaymentMethod paymentMethod) {
+        this.quantity = quantity;
+        this.paymentMethod = paymentMethod;
+    }
 
     public ProductBuy toModel(Product product, User buyer, User seller) {
         return new ProductBuy(product, buyer, seller, paymentMethod, PaymentStatus.STARTED, quantity);

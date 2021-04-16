@@ -1,10 +1,14 @@
 package com.orange.ecommerce.product;
 
+import com.orange.ecommerce.payment.PaymentMethod;
+import com.orange.ecommerce.payment.PaymentStatus;
 import com.orange.ecommerce.user.User;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
+
+import static com.orange.ecommerce.payment.PaymentStatus.COMPLETED;
 
 @Entity
 public class ProductBuy {
@@ -37,6 +41,10 @@ public class ProductBuy {
     @Positive
     private Integer quantity;
 
+    public ProductBuy() {
+
+    }
+
     public ProductBuy(@NotNull Product product, @NotNull User buyer,
                       @NotNull User seller, @NotNull PaymentMethod paymentMethod,
                       @NotNull PaymentStatus status, @NotNull @Positive Integer quantity) {
@@ -56,8 +64,28 @@ public class ProductBuy {
         return product;
     }
 
+    public String getProductName() {
+        return product.getName();
+    }
+
     public User getBuyer() {
         return buyer;
+    }
+
+    public Long getBuyerId() {
+        return buyer.getId();
+    }
+
+    public String getBuyerEmail() {
+        return buyer.getEmail();
+    }
+
+    public Long getSellerId() {
+        return seller.getId();
+    }
+
+    public String getSellerEmail() {
+        return seller.getEmail();
     }
 
     public User getSeller() {
@@ -72,8 +100,22 @@ public class ProductBuy {
         return paymentMethod.getUrl();
     }
 
+    public String getPaymentMethodName() {
+        return paymentMethod.getName();
+    }
+
+    public String getPaymentMethodCode() {
+        return paymentMethod.getCode();
+    }
+
     public PaymentStatus getStatus() {
         return status;
+    }
+
+    public void setStatus(PaymentStatus status) throws Exception {
+        if(COMPLETED.equals(status))
+            throw new Exception("Changing a completed buy is not allowed!");
+        this.status = status;
     }
 
     public Integer getQuantity() {

@@ -263,7 +263,7 @@ public class ProductControllerTest {
             .andExpect(MockMvcResultMatchers
                 .status()
                 .is(307))
-            .andExpect(redirectedUrlPattern("https://paypal.com?buyId={[0-9]+}&redirectUrl=/buy/{[0-9]+}/success"));
+            .andExpect(redirectedUrlPattern("https://paypal.com?buyId={[0-9]+}&redirectUrl=/gateway/paypal/productBuy/{[0-9]+}/return"));
     }
 
     @Test
@@ -307,9 +307,30 @@ public class ProductControllerTest {
             .andExpect(MockMvcResultMatchers
                 .status()
                 .is(307))
-            .andExpect(redirectedUrlPattern("https://paypal.com?buyId={[0-9]+}&redirectUrl=/buy/{[0-9]+}/success"));
+            .andExpect(redirectedUrlPattern("https://paypal.com?buyId={[0-9]+}&redirectUrl=/gateway/paypal/productBuy/{[0-9]+}/return"));
 
         assertEquals(10, product.getStock());
+    }
+
+    @Test
+    @Transactional
+    public void purchasedProduct__should_return_() throws Exception {
+        Product product = saveProductWithOwnerLogin("Hitman", "kratos@gmail.com", "kratos123");
+
+        String productBuyForm = "{\"quantity\": 10, \"paymentMethod\":\"PAYPAL\"}";
+
+        URI uri = new URI("/products/" + product.getId() + "/buy");
+        login("atreus@gmail.com", "atreus123", "ROLE_CUSTOMER");
+
+        mockMvc
+            .perform(MockMvcRequestBuilders
+                .post(uri)
+                .content(productBuyForm)
+                .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(MockMvcResultMatchers
+                .status()
+                .is(307))
+            .andExpect(redirectedUrlPattern("https://paypal.com?buyId={[0-9]+}&redirectUrl=/gateway/paypal/productBuy/{[0-9]+}/return"));
     }
 
     private void uploadImageWithExpectedStatus(Product product, Integer expectedStatus) throws Exception {

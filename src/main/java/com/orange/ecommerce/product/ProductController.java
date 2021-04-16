@@ -2,6 +2,7 @@ package com.orange.ecommerce.product;
 
 import com.orange.ecommerce.category.Category;
 import com.orange.ecommerce.category.CategoryRepository;
+import com.orange.ecommerce.payment.GatewayTransactionRepository;
 import com.orange.ecommerce.share.MailSender;
 import com.orange.ecommerce.share.ValidationErrorsDTO;
 import com.orange.ecommerce.user.User;
@@ -35,16 +36,18 @@ public class ProductController {
     private final ProductBuyRepository productBuyRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final GatewayTransactionRepository gatewayTransactionRepository;
 
     public ProductController(ProductRepository productRepository, ProductOpinionRepository productOpinionRepository,
                              ProductQuestionRepository productQuestionRepository, ProductBuyRepository productBuyRepository,
-                             CategoryRepository categoryRepository, UserRepository userRepository) {
+                             CategoryRepository categoryRepository, UserRepository userRepository, GatewayTransactionRepository gatewayTransactionRepository) {
         this.productRepository = productRepository;
         this.productOpinionRepository = productOpinionRepository;
         this.productQuestionRepository = productQuestionRepository;
         this.productBuyRepository = productBuyRepository;
         this.categoryRepository = categoryRepository;
         this.userRepository = userRepository;
+        this.gatewayTransactionRepository = gatewayTransactionRepository;
     }
 
     @PostMapping
@@ -153,10 +156,11 @@ public class ProductController {
         }
 
         ProductBuy buy = form.toModel(product, loggedUser, product.getOwner());
-        product.decrementStock(buy.getQuantity());
 
-        productBuyRepository.save(buy);
+        product.decrementStock(buy.getQuantity());
         productRepository.save(product);
+
+        ProductBuy savedProductBuy = productBuyRepository.save(buy);
 
         var sender = new MailSender()
                 .setFrom(loggedUser.getEmail())
@@ -166,7 +170,7 @@ public class ProductController {
                         product.getName(), buy.getQuantity(), loggedUser.getEmail()))
                 .send();
 
-        var successUrl = new URI(String.format("/buy/%s/success", buy.getId()));
+        var successUrl = new URI(String.format("/gateway/%s/productBuy/%s/return", savedProductBuy.getPaymentMethodCode(), buy.getId()));
         var redirectToGatewayUrl = new URI(String.format(
                 "%s?buyId=%s&redirectUrl=%s",
                 buy.getPaymentMethodUrl(),
@@ -176,9 +180,11 @@ public class ProductController {
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.setLocation(redirectToGatewayUrl);
 
+        ProductBuyResponseDTO productBuyResponseDTO = new ProductBuyResponseDTO(savedProductBuy, redirectToGatewayUrl.toString());
+
         return ResponseEntity
                 .status(HttpStatus.TEMPORARY_REDIRECT)
                 .headers(responseHeaders)
-                .body(redirectToGatewayUrl);
+                .body(productBuyResponseDTO);
     }
 }
